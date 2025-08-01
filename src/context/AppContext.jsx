@@ -5,21 +5,7 @@ import humanizeDuration from "humanize-duration";
 
 export const AppContext = createContext();
 
-      // ✅ Top-level pe export karo
-export const calculateChapterTime = (chapter) => {
-  let total = 0;
-  if (Array.isArray(chapter?.chapterContent)) {
-    chapter.chapterContent.forEach((lecture) => {
-      total += lecture?.duration || 0;
-    });
-  }
-  return `${total} min`;
-};
-
-
-
-
-
+  
 export const AppContextProvider = (props) => {
   const currency = import.meta.env.VITE_CURRENCY;
   const navigate = useNavigate();
@@ -48,13 +34,13 @@ export const AppContextProvider = (props) => {
   
   const calculateChapterTime = (course) => {
     let time = 0;
-    course.courseContent.forEach((chapter) => {
-      chapter.chapterContent.forEach((lecture) => {
+
+    Array.isArray(course?.chapterContent) &&
+      course?.chapterContent?.forEach((lecture) => {
         time += lecture.lectureDuration;
       });
-    });
-    return humanizeDuration(time * 60 * 1000, { units: ["h", "m"] });
-  };
+    return humanizeDuration(time * 60 * 1000, { units: ["h", "m"] });
+  };
 
   // Function to calculate number of lectures
   const calculateNoOfLectures = (course) => {
