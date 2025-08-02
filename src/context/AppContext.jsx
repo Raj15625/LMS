@@ -1,11 +1,9 @@
 import { createContext, useEffect, useState } from "react";
 import { dummyCourses } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
-import humanizeDuration from "humanize-duration";
 
 export const AppContext = createContext();
 
-  
 export const AppContextProvider = (props) => {
   const currency = import.meta.env.VITE_CURRENCY;
   const navigate = useNavigate();
@@ -13,12 +11,12 @@ export const AppContextProvider = (props) => {
   const [allCourses, setAllCourses] = useState([]);
   const [isEducator, setIsEducator] = useState(true);
 
-  // Fetch All Course
+  // Fetch All Courses
   const fetchAllCourses = async () => {
     setAllCourses(dummyCourses);
   };
 
-  // Function to calculate average rating of course
+  // Calculate average rating of course
   const calculateRating = (course) => {
     if (course.courseRatings.length === 0) {
       return 0;
@@ -30,19 +28,46 @@ export const AppContextProvider = (props) => {
     return (totalRating / course.courseRatings.length).toFixed(1);
   };
 
-  // ✅ Only one function to calculate course duration
-  
-  const calculateChapterTime = (course) => {
+  // Format total minutes into "X hours Y minutes"
+  const formatDuration = (totalMinutes) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    const hourStr = hours > 1 ? `${hours} hours` : hours === 1 ? `1 hour` : "";
+    const minuteStr =
+      minutes > 1 ? `${minutes} minutes` : minutes === 1 ? `1 minute` : "";
+
+    if (hourStr && minuteStr) return `${hourStr} ${minuteStr}`;
+    if (hourStr) return hourStr;
+    if (minuteStr) return minuteStr;
+    return "0 minutes";
+  };
+
+  // Calculate total course duration in formatted string
+  const calculateCoursesDuration = (course) => {
+    let totalMinutes = 0;
+    course.courseContent.forEach((chapter) => {
+      chapter.chapterContent.forEach((lecture) => {
+        totalMinutes += lecture.lectureDuration;
+      });
+    });
+
+    return formatDuration(totalMinutes);
+  };
+
+  // Calculate duration of one chapter (used elsewhere)
+  const calculateChapterTime = (chapter) => {
     let time = 0;
 
-    Array.isArray(course?.chapterContent) &&
-      course?.chapterContent?.forEach((lecture) => {
+    Array.isArray(chapter?.chapterContent) &&
+      chapter.chapterContent.forEach((lecture) => {
         time += lecture.lectureDuration;
       });
-    return humanizeDuration(time * 60 * 1000, { units: ["h", "m"] });
-  };
+    // You can use humanize-duration here or reuse formatDuration if you want consistent format
+    return formatDuration(time);
+  };
 
-  // Function to calculate number of lectures
+  // Calculate number of lectures in course
   const calculateNoOfLectures = (course) => {
     let totalLectures = 0;
     course.courseContent.forEach((chapter) => {
@@ -65,12 +90,11 @@ export const AppContextProvider = (props) => {
     isEducator,
     setIsEducator,
     calculateNoOfLectures,
-    calculateChapterTime, // ✅ only one
+    calculateChapterTime,
+    calculateCoursesDuration,
   };
 
   return (
-    <AppContext.Provider value={value}>
-      {props.children}
-    </AppContext.Provider>
+    <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
   );
 };
